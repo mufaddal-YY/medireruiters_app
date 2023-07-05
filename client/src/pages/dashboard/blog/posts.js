@@ -44,7 +44,7 @@ export default function BlogPostsPage() {
 
   // const getAllPosts = useCallback(async () => {
   //   try {
-  //     const response = await axios.get('http://localhost:8080/api/v1/blogs');
+  //     const response = await axios.get('https://medi-server.onrender.com/api/v1/blogs');
   //     setPosts(response.data.posts);
   //   } catch (error) {
   //     console.error(error);
@@ -57,7 +57,7 @@ export default function BlogPostsPage() {
 
   const getAllPosts = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/v1/blogs');
+      const response = await axios.get('https://medi-server.onrender.com/api/v1/blogs');
       console.log('API response:', response.data);
       setPosts(response.data);
     } catch (error) {

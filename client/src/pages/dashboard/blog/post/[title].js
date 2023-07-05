@@ -47,7 +47,7 @@ export default function BlogPostPage({params}) {
 
   const getPost = useCallback(async () => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/v1/blogs/${params._id}`, {
+      const response = await axios.get(`https://medi-server.onrender.com/api/v1/blogs/${params._id}`, {
         params: { _id: params._id },
       });
   

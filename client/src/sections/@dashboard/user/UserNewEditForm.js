@@ -123,7 +123,7 @@ export default function UserNewEditForm({ isEdit = false, currentCandidate }) {
   //       ...data,
   //       password: hashedPassword,
   //     };
-  //     const response = await axios.post('http://localhost:8080/api/v1/users', newData);
+  //     const response = await axios.post('https://medi-server.onrender.com/api/v1/users', newData);
   //     await new Promise((resolve) => setTimeout(resolve, 500));
   //     reset();
   //     enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
@@ -150,12 +150,12 @@ export default function UserNewEditForm({ isEdit = false, currentCandidate }) {
 
       if (isEdit) {
         response = await axios.put(
-          `http://localhost:8080/api/v1/candidates/${currentCandidate._id}`,
+          `https://medi-server.onrender.com/api/v1/candidates/${currentCandidate._id}`,
           newData
         );
         successMessage = 'Updated Successfully';
       } else {
-        response = await axios.post('http://localhost:8080/api/v1/candidates', newData);
+        response = await axios.post('https://medi-server.onrender.com/api/v1/candidates', newData);
         successMessage = 'Created Successfully';
       }
 

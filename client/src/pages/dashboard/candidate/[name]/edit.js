@@ -24,7 +24,7 @@ export default function UserEditPage() {
 
   const getCandidates = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/v1/candidates');
+      const response = await axios.get('https://medi-server.onrender.com/api/v1/candidates');
       console.log('API response:', response.data);
       setUsers(response.data);
     } catch (error) {

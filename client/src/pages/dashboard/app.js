@@ -104,7 +104,7 @@ export default function GeneralAppPage({ searchJobs, onSearchJobs }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/api/v1/jobs');
+        const response = await axios.get('https://medi-server.onrender.com/api/v1/jobs');
         const jobDdata = response.data;
         setJobData(jobDdata); // Use the correct variable here
       } catch (error) {

@@ -114,12 +114,12 @@ export default function BlogNewPostForm({ isEdit = false, currentJob, initialSta
 
       if (isEdit) {
         response = await axios.put(
-          `http://localhost:8080/api/v1/blogs/${currentDatabase._id}`,
+          `https://medi-server.onrender.com/api/v1/blogs/${currentDatabase._id}`,
           data
         );
         successMessage = 'Updated Successfully';
       } else {
-        response = await axios.post('http://localhost:8080/api/v1/blogs', data);
+        response = await axios.post('https://medi-server.onrender.com/api/v1/blogs', data);
         successMessage = 'Created Successfully';
       }
 

@@ -27,7 +27,7 @@ export default function JobEditPage({ params }) {
 
   const getJobs = async () => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/v1/jobs/${params._id}`);
+      const response = await axios.get(`https://medi-server.onrender.com/api/v1/jobs/${params._id}`);
       console.log('API response:', response.data);
       setJobs(response.data); // Assuming you have a state variable named "jobs" to store the response data
     } catch (error) {

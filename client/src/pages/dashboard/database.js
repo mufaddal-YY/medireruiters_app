@@ -159,7 +159,7 @@ export default function DatabasePage({ isEdit = false, currentDatabase, initialS
 
   const getTableData = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/v1/databases');
+      const response = await axios.get('https://medi-server.onrender.com/api/v1/databases');
       console.log('API response:', response.data);
       setTableData(response.data);
     } catch (error) {
@@ -232,12 +232,12 @@ export default function DatabasePage({ isEdit = false, currentDatabase, initialS
 
       if (isEdit) {
         response = await axios.put(
-          `http://localhost:8080/api/v1/databases/${currentDatabase._id}`,
+          `https://medi-server.onrender.com/api/v1/databases/${currentDatabase._id}`,
           data
         );
         successMessage = 'Updated Successfully';
       } else {
-        response = await axios.post('http://localhost:8080/api/v1/databases', data);
+        response = await axios.post('https://medi-server.onrender.com/api/v1/databases', data);
         successMessage = 'Created Successfully';
       }
 
@@ -264,7 +264,7 @@ export default function DatabasePage({ isEdit = false, currentDatabase, initialS
         }
       }
 
-      await axios.delete(`http://localhost:8080/api/v1/databases/${_id}`);
+      await axios.delete(`https://medi-server.onrender.com/api/v1/databases/${_id}`);
 
       // Show success snackbar
       enqueueSnackbar('Deleted', { variant: 'success' });
@@ -294,7 +294,7 @@ export default function DatabasePage({ isEdit = false, currentDatabase, initialS
 
       // Delete each selected row from the database
       for (const rowId of selectedRows) {
-        await axios.delete(`http://localhost:8080/api/v1/databases/${rowId}`);
+        await axios.delete(`https://medi-server.onrender.com/api/v1/databases/${rowId}`);
       }
 
       // Handle success or show a notification

@@ -70,7 +70,7 @@ export default function DatabaseTableRow({
 
     // Make an HTTP POST request to the API endpoint
     axios
-      .post('http://localhost:8080/api/v1/databases', { cellId, newStatus })
+      .post('https://medi-server.onrender.com/api/v1/databases', { cellId, newStatus })
       .then((response) => {
         console.log('Status updated successfully');
       })

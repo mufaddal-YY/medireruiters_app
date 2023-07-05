@@ -136,7 +136,7 @@ export default function UserListPage() {
   
   const getTableData = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/v1/candidates');
+      const response = await axios.get('https://medi-server.onrender.com/api/v1/candidates');
       console.log('API response:', response.data);
       setTableData(response.data);
     } catch (error) {
@@ -214,7 +214,7 @@ export default function UserListPage() {
         }
       }
   
-      await axios.delete(`http://localhost:8080/api/v1/candidates/${_id}`);
+      await axios.delete(`https://medi-server.onrender.com/api/v1/candidates/${_id}`);
   
       // Show success snackbar
       enqueueSnackbar('User Deleted', { variant: 'success' });
@@ -245,7 +245,7 @@ export default function UserListPage() {
   
       // Delete each selected row from the database
       for (const rowId of selectedRows) {
-        await axios.delete(`http://localhost:8080/api/v1/candidates/${rowId}`);
+        await axios.delete(`https://medi-server.onrender.com/api/v1/candidates/${rowId}`);
       }
   
       // Handle success or show a notification

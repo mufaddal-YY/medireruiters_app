@@ -96,10 +96,10 @@ export default function JobNewEditForm({ isEdit = false, currentJob, initialStat
       let successMessage;
 
       if (isEdit) {
-        response = await axios.put(`http://localhost:8080/api/v1/jobs/${currentJob._id}`, data);
+        response = await axios.put(`https://medi-server.onrender.com/api/v1/jobs/${currentJob._id}`, data);
         successMessage = 'Updated Successfully';
       } else {
-        response = await axios.post('http://localhost:8080/api/v1/jobs', data);
+        response = await axios.post('https://medi-server.onrender.com/api/v1/jobs', data);
         successMessage = 'Created Successfully';
       }
 

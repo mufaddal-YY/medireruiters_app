@@ -11,12 +11,15 @@ module.exports = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  images: {    
+    unoptimized: true,
+  },
   swcMinify: false,
   trailingSlash: true,
   env: {
 
     // HOST
-    HOST_API_KEY: 'http://localhost:8080',
+    HOST_API_KEY: 'https://medi-server.onrender.com',
     // MAPBOX
     MAPBOX_API: '',
   

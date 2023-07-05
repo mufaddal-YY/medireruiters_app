@@ -75,7 +75,7 @@ export function AuthProvider({ children }) {
       if (accessToken && isValidToken(accessToken)) {
         setSession(accessToken);
 
-        const response = await axios.get('http://localhost:8080/api/v1/users');
+        const response = await axios.get('https://medi-server.onrender.com/api/v1/users');
 
         const { user } = response.data;
 
@@ -114,7 +114,7 @@ export function AuthProvider({ children }) {
   // LOGIN
   const login = useCallback(async (email, password) => {
     try {
-      const response = await axios.post('http://localhost:8080/api/v1/users/', {
+      const response = await axios.post('https://medi-server.onrender.com/api/v1/users/', {
         email,
         password,
       });
@@ -147,7 +147,7 @@ export function AuthProvider({ children }) {
   // REGISTER
   const register = useCallback(async (email, password, firstName, lastName) => {
     try {
-      const response = await axios.post('http://localhost:8080/api/v1/users', {
+      const response = await axios.post('https://medi-server.onrender.com/api/v1/users', {
         email,
         password,
         firstName,

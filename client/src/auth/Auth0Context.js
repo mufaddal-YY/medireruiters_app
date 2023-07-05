@@ -40,6 +40,13 @@ const reducer = (state, action) => {
       user: null,
     };
   }
+  if (action.type === 'REGISTER') {
+    return {
+      ...state,
+      isAuthenticated: true,
+      user: action.payload.user,
+    };
+  }
 
   return state;
 };
@@ -144,17 +151,50 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
+  // REGISTER
+  const register = useCallback(async (email, password) => {
+    try {
+      await auth0Client?.signup({
+        firstName,
+        lastName,
+        email,
+        password,
+      });
+  
+      const isAuthenticated = await auth0Client?.isAuthenticated();
+  
+      if (isAuthenticated) {
+        const user = await auth0Client?.getUser();
+  
+        dispatch({
+          type: 'REGISTER',
+          payload: {
+            user: {
+              ...user,
+              displayName: user?.name,
+              photoURL: user?.picture,
+              role: 'admin',
+            },
+          },
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
   const memoizedValue = useMemo(
     () => ({
-      isInitialized: state.isInitialized,
-      isAuthenticated: state.isAuthenticated,
-      user: state.user,
-      method: 'auth0',
-      login,
-      logout,
+    isInitialized: state.isInitialized,
+    isAuthenticated: state.isAuthenticated,
+    user: state.user,
+    method: 'auth0',
+    login,
+    logout,
+    register,
     }),
-    [state.isAuthenticated, state.isInitialized, state.user, login, logout]
-  );
+    [state.isAuthenticated, state.isInitialized, state.user, login, logout, register]
+    );
 
   return <AuthContext.Provider value={memoizedValue}>{children}</AuthContext.Provider>;
 }

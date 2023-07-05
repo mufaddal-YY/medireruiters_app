@@ -1,5 +1,5 @@
 import { paramCase } from 'change-case';
-import { Children, useState } from 'react';
+import { Children, useState, useEffect, useCallback } from 'react';
 // next
 import Head from 'next/head';
 import NextLink from 'next/link';
@@ -66,6 +66,8 @@ import {
 import { UserTableToolbar, UserTableRow } from '../../sections/@dashboard/user/list';
 import { label } from 'yet-another-react-lightbox/core';
 import { FormProvider } from 'react-hook-form';
+import axios from 'axios';
+import { useSnackbar } from '../../components/snackbar';
 
 // ----------------------------------------------------------------------
 
@@ -88,8 +90,8 @@ const TABLE_HEAD = [
   { id: 'name', label: 'Name', align: 'left' },
   { id: 'phone', label: 'Email', align: 'left' },
   { id: 'email', label: 'Phone', align: 'left' },
-  { id: 'status', label: 'Verified', align: 'center' },
-  { id: 'Location', label: 'Status', align: 'left' },
+  { id: 'city', label: 'City', align: 'center' },
+  { id: 'address', label: 'address', align: 'left' },
   { id: '' },
 ];
 
@@ -100,6 +102,10 @@ UserListPage.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
 // ----------------------------------------------------------------------
 
 export default function UserListPage() {
+
+  const { enqueueSnackbar } = useSnackbar();
+
+
   const {
     dense,
     page,
@@ -125,7 +131,23 @@ export default function UserListPage() {
 
   const { push } = useRouter();
 
-  const [tableData, setTableData] = useState(_userList);
+  const [tableData, setTableData] = useState([]);
+
+  
+  const getTableData = useCallback(async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/api/v1/candidates');
+      console.log('API response:', response.data);
+      setTableData(response.data);
+    } catch (error) {
+      console.error('API error:', error);
+    }
+  }, []);
+  
+  useEffect(() => {
+    getTableData();
+  }, []);
+
 
   const [openConfirm, setOpenConfirm] = useState(false);
 
@@ -134,6 +156,7 @@ export default function UserListPage() {
   const [filterRole, setFilterRole] = useState('all');
 
   const [filterStatus, setFilterStatus] = useState('all');
+  const [openUploadFile, setOpenUploadFile] = useState(false);
 
   const dataFiltered = applyFilter({
     inputData: tableData,
@@ -148,8 +171,6 @@ export default function UserListPage() {
   const denseHeight = dense ? 52 : 72;
 
   const isFiltered = filterName !== '' || filterRole !== 'all' || filterStatus !== 'all';
-
-  const [openUploadFile, setOpenUploadFile] = useState(false);
 
   const isNotFound =
     (!dataFiltered.length && !!filterName) ||
@@ -179,37 +200,65 @@ export default function UserListPage() {
     setFilterRole(event.target.value);
   };
 
-  const handleDeleteRow = (id) => {
-    const deleteRow = tableData.filter((row) => row.id !== id);
-    setSelected([]);
-    setTableData(deleteRow);
 
-    if (page > 0) {
-      if (dataInPage.length < 2) {
-        setPage(page - 1);
+  const handleDeleteRow = async (_id) => {
+    try {
+      
+      const deleteRow = tableData.filter((row) => row._id !== _id);
+      setSelected([]);
+      setTableData(deleteRow);
+  
+      if (page > 0) {
+        if (dataInPage.length < 2) {
+          setPage(page - 1);
+        }
       }
+  
+      await axios.delete(`http://localhost:8080/api/v1/candidates/${_id}`);
+  
+      // Show success snackbar
+      enqueueSnackbar('User Deleted', { variant: 'success' });
+    } catch (error) {
+      console.error('Error deleting row:', error);
+      // Handle error or show an error notification
+      enqueueSnackbar('Error deleting user', { variant: 'error' });
     }
   };
+  
 
-  const handleDeleteRows = (selectedRows) => {
-    const deleteRows = tableData.filter((row) => !selectedRows.includes(row.id));
-    setSelected([]);
-    setTableData(deleteRows);
-
-    if (page > 0) {
-      if (selectedRows.length === dataInPage.length) {
-        setPage(page - 1);
-      } else if (selectedRows.length === dataFiltered.length) {
-        setPage(0);
-      } else if (selectedRows.length > dataInPage.length) {
-        const newPage = Math.ceil((tableData.length - selectedRows.length) / rowsPerPage) - 1;
-        setPage(newPage);
+  const handleDeleteRows = async (selectedRows) => {
+    try {
+      const deleteRows = tableData.filter((row) => !selectedRows.includes(row._id));
+      setSelected([]);
+      setTableData(deleteRows);
+  
+      if (page > 0) {
+        if (selectedRows.length === dataInPage.length) {
+          setPage(page - 1);
+        } else if (selectedRows.length === dataFiltered.length) {
+          setPage(0);
+        } else if (selectedRows.length > dataInPage.length) {
+          const newPage = Math.ceil((tableData.length - selectedRows.length) / rowsPerPage) - 1;
+          setPage(newPage);
+        }
       }
+  
+      // Delete each selected row from the database
+      for (const rowId of selectedRows) {
+        await axios.delete(`http://localhost:8080/api/v1/candidates/${rowId}`);
+      }
+  
+      // Handle success or show a notification
+       enqueueSnackbar('Users Deleted', { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar('Error deleting', { variant: 'error' });
+      // Handle error or show an error notification
     }
   };
+  
 
-  const handleEditRow = (id) => {
-    push(PATH_DASHBOARD.candidate.edit(paramCase(id)));
+  const handleEditRow = (_id) => {
+    push(PATH_DASHBOARD.candidate.edit(paramCase(_id)));
   };
 
   const handleResetFilter = () => {
@@ -240,59 +289,23 @@ export default function UserListPage() {
             { name: 'Candidates', href: PATH_DASHBOARD.candidate.root },
           ]}
           action={
-          <>
-          <Stack direction={{xs: "column", md: "row"}} spacing={2}>
-           <Button
-                
-                type='submit'
-                variant="contained"
-                size="medium"
-                startIcon={<Iconify icon="eva:plus-fill" />}
-                href= {PATH_DASHBOARD.candidate.new}
-              >
-                Add Candidate
-              </Button>
-               </Stack> 
-          </>}
+            <>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="medium"
+                  startIcon={<Iconify icon="eva:plus-fill" />}
+                  href={PATH_DASHBOARD.candidate.new}
+                >
+                  Add Candidate
+                </Button>
+              </Stack>
+            </>
+          }
         />
 
         <FileNewFolderDialog open={openUploadFile} onClose={handleCloseUploadFile} />
-
-        {/* <Grid sx={{mb: 2}} item xs={12} md={8}>
-          <Stack spacing={2} direction="row">
-            <Stack direction="column" sx={{ flexGrow: 1 }}>
-              <Stack direction="row" spacing={2} sx={{ p: 1 }}>
-                <TextField fullWidth label="Company Name" variant="outlined" />
-                <TextField fullWidth label="Location" variant="outlined" />
-                <TextField fullWidth label="Requirement" variant="outlined" />
-              </Stack>
-              <Stack spacing={2} direction="row" sx={{ p: 1 }}>
-                <TextField fullWidth  label="HR Name" variant="outlined" />
-                <TextField fullWidth  label="Phone" variant="outlined" />
-                <TextField fullWidth  label="Email" variant="outlined" />
-              </Stack>
-            </Stack>
-            <Stack spacing={3} direction="column" sx={{ p: 1.5 }}>
-              <Button
-                
-                type='submit'
-                variant="contained"
-                size='large'
-                startIcon={<Iconify icon="eva:plus-fill" />}
-              >
-                Add Client
-              </Button>
-              <Button
-                variant="outlined"
-                size='large'
-                startIcon={<Iconify icon="material-symbols:upload-rounded" />}
-                onClick={handleOpenUploadFile}
-              >
-                Upload
-              </Button>
-            </Stack>
-          </Stack>
-        </Grid> */}
 
         <Card>
           <Tabs
@@ -328,7 +341,7 @@ export default function UserListPage() {
               onSelectAllRows={(checked) =>
                 onSelectAllRows(
                   checked,
-                  tableData.map((row) => row.id)
+                  tableData.map((row) => row._id)
                 )
               }
               action={
@@ -352,7 +365,7 @@ export default function UserListPage() {
                   onSelectAllRows={(checked) =>
                     onSelectAllRows(
                       checked,
-                      tableData.map((row) => row.id)
+                      tableData.map((row) => row._id)
                     )
                   }
                 />
@@ -362,11 +375,11 @@ export default function UserListPage() {
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((row) => (
                       <UserTableRow
-                        key={row.id}
+                        key={row._id}
                         row={row}
-                        selected={selected.includes(row.id)}
-                        onSelectRow={() => onSelectRow(row.id)}
-                        onDeleteRow={() => handleDeleteRow(row.id)}
+                        selected={selected.includes(row._id)}
+                        onSelectRow={() => onSelectRow(row._id)}
+                        onDeleteRow={() => handleDeleteRow(row._id)}
                         onEditRow={() => handleEditRow(row.name)}
                       />
                     ))}

@@ -68,27 +68,26 @@ export default function AccountPopover() {
 
   return (
     <>
-    <Grid >
-      <IconButtonAnimate
-        onClick={handleOpenPopover}
-        sx={{
-          p: 0,
-          ...(openPopover && {
-            '&:before': {
-              zIndex: 1,
-              content: "''",
-              width: '100%',
-              height: '100%',
-              borderRadius: '50%',
-              position: 'absolute',
-              bgcolor: (theme) => alpha(theme.palette.grey[900], 0.8),
-            },
-          }),
-        }}
-      >
-        <CustomAvatar src={user?.photoURL} alt={user?.displayName} name={user?.displayName} />
-     </IconButtonAnimate>
-      
+      <Grid>
+        <IconButtonAnimate
+          onClick={handleOpenPopover}
+          sx={{
+            p: 0,
+            ...(openPopover && {
+              '&:before': {
+                zIndex: 1,
+                content: "''",
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                position: 'absolute',
+                bgcolor: (theme) => alpha(theme.palette.grey[900], 0.8),
+              },
+            }),
+          }}
+        >
+          <CustomAvatar src={user?.photoURL} alt={user?.displayName} name={user?.displayName} />
+        </IconButtonAnimate>
       </Grid>
 
       <MenuPopover open={openPopover} onClose={handleClosePopover} sx={{ width: 200, p: 0 }}>

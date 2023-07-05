@@ -6,7 +6,7 @@ import Iconify from '../../../../components/iconify';
 
 // ----------------------------------------------------------------------
 
-UserTableToolbar.propTypes = {
+JobTableToolbar.propTypes = {
   isFiltered: PropTypes.bool,
   filterName: PropTypes.string,
   filterRole: PropTypes.string,
@@ -16,7 +16,7 @@ UserTableToolbar.propTypes = {
   optionsRole: PropTypes.arrayOf(PropTypes.string),
 };
 
-export default function UserTableToolbar({
+export default function JobTableToolbar({
   isFiltered,
   filterName,
   filterRole,
@@ -75,7 +75,7 @@ export default function UserTableToolbar({
         fullWidth
         value={filterName}
         onChange={onFilterName}
-        placeholder="Search..."
+        placeholder="Search Jobs..."
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">

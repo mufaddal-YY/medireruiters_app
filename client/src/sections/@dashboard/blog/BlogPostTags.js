@@ -19,7 +19,7 @@ export default function BlogPostTags({ post }) {
   return (
     <>
       <Stack direction="row" flexWrap="wrap">
-        {tags.map((tag) => (
+        {tags && tags.map((tag) => (
           <Chip key={tag} label={tag} sx={{ m: 0.5 }} />
         ))}
       </Stack>
@@ -38,11 +38,11 @@ export default function BlogPostTags({ post }) {
           label={fShortenNumber(favorite)}
         />
 
-        <CustomAvatarGroup>
+        {/* <CustomAvatarGroup>
           {favoritePerson.map((person) => (
             <Avatar key={person.name} alt={person.name} src={person.avatarUrl} />
           ))}
-        </CustomAvatarGroup>
+        </CustomAvatarGroup> */}
       </Stack>
     </>
   );

@@ -75,7 +75,7 @@ export function AuthProvider({ children }) {
       if (accessToken && isValidToken(accessToken)) {
         setSession(accessToken);
 
-        const response = await axios.get('/api/account/my-account');
+        const response = await axios.get('http://localhost:8080/api/v1/users');
 
         const { user } = response.data;
 
@@ -113,40 +113,66 @@ export function AuthProvider({ children }) {
 
   // LOGIN
   const login = useCallback(async (email, password) => {
-    const response = await axios.post('/api/account/login', {
-      email,
-      password,
-    });
-    const { accessToken, user } = response.data;
-
-    setSession(accessToken);
-
-    dispatch({
-      type: 'LOGIN',
-      payload: {
-        user,
-      },
-    });
+    try {
+      const response = await axios.post('http://localhost:8080/api/v1/users/', {
+        email,
+        password,
+      });
+  
+      // Check if the user exists in the response
+      if (response.data.user) {
+        const { accessToken, user } = response.data;
+  
+        setSession(accessToken);
+  
+        dispatch({
+          type: 'LOGIN',
+          payload: {
+            user,
+          },
+        });
+  
+        // Perform any necessary actions after successful login
+      } else {
+        // Handle login failure
+        console.error('Invalid email or password');
+      }
+    } catch (error) {
+      // Handle login error
+      console.error(error.response.data.message);
+    }
   }, []);
+  
 
   // REGISTER
   const register = useCallback(async (email, password, firstName, lastName) => {
-    const response = await axios.post('/api/account/register', {
-      email,
-      password,
-      firstName,
-      lastName,
-    });
-    const { accessToken, user } = response.data;
-
-    localStorage.setItem('accessToken', accessToken);
-
-    dispatch({
-      type: 'REGISTER',
-      payload: {
-        user,
-      },
-    });
+    try {
+      const response = await axios.post('http://localhost:8080/api/v1/users', {
+        email,
+        password,
+        firstName,
+        lastName,
+      });
+      const { accessToken, user } = response.data;
+  
+      localStorage.setItem('accessToken', accessToken);
+  
+      dispatch({
+        type: 'REGISTER',
+        payload: {
+          user,
+        },
+      });
+  
+      // Perform login after registration
+      await login(email, password); // Assuming you have a login function defined
+  
+      // Clear registration form or perform any other necessary actions
+  
+    } catch (error) {
+      // Handle registration error
+      console.error(error);
+    }
   }, []);
 
   // LOGOUT

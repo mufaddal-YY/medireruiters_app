@@ -73,12 +73,13 @@ export default function MyApp(props) {
   const getLayout = Component.getLayout ?? ((page) => page);
 
   return (
+    
     <CacheProvider value={emotionCache}>
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
       </Head>
 
-      <AuthProvider>
+      <AuthProvider >
         <ReduxProvider store={store}>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <SettingsProvider>

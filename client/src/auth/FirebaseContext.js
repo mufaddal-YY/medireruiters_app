@@ -10,11 +10,15 @@ import {
   GithubAuthProvider,
   TwitterAuthProvider,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail, // Add this import
   createUserWithEmailAndPassword,
 } from 'firebase/auth';
 import { getFirestore, collection, doc, getDoc, setDoc } from 'firebase/firestore';
 // config
 import { FIREBASE_API } from '../config-global';
+import { PATH_AUTH } from 'src/routes/paths';
+import { useRouter } from 'next/router';
+import axios from 'axios';
 
 // ----------------------------------------------------------------------
 
@@ -65,6 +69,8 @@ AuthProvider.propTypes = {
 };
 
 export function AuthProvider({ children }) {
+  const router = useRouter();
+
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const initialize = useCallback(() => {
@@ -124,17 +130,42 @@ export function AuthProvider({ children }) {
     signInWithPopup(AUTH, TWITTER_PROVIDER);
   }, []);
 
-  // REGISTER
-  const register = useCallback(async (email, password, firstName, lastName) => {
-    await createUserWithEmailAndPassword(AUTH, email, password).then(async (res) => {
-      const userRef = doc(collection(DB, 'users'), res.user?.uid);
+  const register = useCallback(
+    async (email, password, firstName, lastName) => {
+      try {
+        await createUserWithEmailAndPassword(AUTH, email, password);
 
-      await setDoc(userRef, {
-        uid: res.user?.uid,
-        email,
-        displayName: `${firstName} ${lastName}`,
-      });
-    });
+        const userRef = doc(collection(DB, 'users'), AUTH.currentUser.uid);
+        await setDoc(userRef, {
+          uid: AUTH.currentUser.uid,
+          email,
+          displayName: `${firstName} ${lastName}`,
+        });
+
+        await signOut(AUTH); // Sign out the user after successful registration
+        router.push(PATH_AUTH.login);
+      } catch (error) {
+        console.error(error);
+
+        reset();
+
+        setError('afterSubmit', {
+          ...error,
+          message: error.message || error,
+        });
+      }
+    },
+    [router]
+  );
+
+  // RESET PASSWORD
+  const resetPassword = useCallback(async (email) => {
+    try {
+      await sendPasswordResetEmail(AUTH, email);
+    } catch (error) {
+      console.error(error);
+      // Handle error if necessary
+    }
   }, []);
 
   // LOGOUT
@@ -164,6 +195,7 @@ export function AuthProvider({ children }) {
       loginWithGoogle,
       loginWithTwitter,
       register,
+      resetPassword,
       logout,
     ]
   );

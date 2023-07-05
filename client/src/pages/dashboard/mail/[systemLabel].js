@@ -15,7 +15,7 @@ export default function MailPage() {
   return (
     <>
       <Head>
-        <title> Mail | Minimal UI</title>
+        <title> Mail | Medirecruiters</title>
       </Head>
 
       <Mail />

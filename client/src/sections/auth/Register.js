@@ -44,7 +44,7 @@ export default function Register() {
         .
       </Typography>
 
-      <AuthWithSocial />
+      {/* <AuthWithSocial /> */}
     </LoginLayout>
   );
 }

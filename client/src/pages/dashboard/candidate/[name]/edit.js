@@ -1,40 +1,52 @@
 import { paramCase } from 'change-case';
-// next
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-// @mui
 import { Container } from '@mui/material';
-// routes
 import { PATH_DASHBOARD } from '../../../../routes/paths';
-// _mock_
 import { _userList } from '../../../../_mock/arrays';
-// layouts
 import DashboardLayout from '../../../../layouts/dashboard';
-// components
 import { useSettingsContext } from '../../../../components/settings';
 import CustomBreadcrumbs from '../../../../components/custom-breadcrumbs';
-// sections
 import UserNewEditForm from '../../../../sections/@dashboard/user/UserNewEditForm';
-
-// ----------------------------------------------------------------------
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 UserEditPage.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
 
-// ----------------------------------------------------------------------
-
 export default function UserEditPage() {
   const { themeStretch } = useSettingsContext();
-
   const {
     query: { name },
   } = useRouter();
 
-  const currentUser = _userList.find((user) => paramCase(user.name) === name);
+  const [candidates, setCandidate] = useState([]);
+  const [currentCandidate, setCurrentCandidate] = useState(null);
+
+  const getCandidates = async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/api/v1/candidates');
+      console.log('API response:', response.data);
+      setUsers(response.data);
+    } catch (error) {
+      console.error('API error:', error);
+    }
+  };
+
+  useEffect(() => {
+    getUsers();
+  }, []);
+
+  useEffect(() => {
+    if (candidate.length > 0) {
+      const foundCandidate = candidates.find((candidates) => paramCase(candidate.name) === name);
+      setCurrentCandidate(foundCandidate);
+    }
+  }, [users, name]);
 
   return (
     <>
       <Head>
-        <title> Candidate: Edit candidate | Medirecruiters</title>
+        <title>Candidate: Edit candidate | Medirecruiters</title>
       </Head>
 
       <Container maxWidth={themeStretch ? false : 'xl'}>

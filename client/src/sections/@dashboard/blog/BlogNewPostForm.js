@@ -1,5 +1,5 @@
 import * as Yup from 'yup';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 // next
 import { useRouter } from 'next/router';
 // form
@@ -19,8 +19,11 @@ import FormProvider, {
   RHFTextField,
   RHFAutocomplete,
 } from '../../../components/hook-form';
+
 //
+
 import BlogNewPostPreview from './BlogNewPostPreview';
+import axios from 'axios';
 
 // ----------------------------------------------------------------------
 
@@ -42,7 +45,7 @@ const TAGS_OPTION = [
 
 // ----------------------------------------------------------------------
 
-export default function BlogNewPostForm() {
+export default function BlogNewPostForm({ isEdit = false, currentJob, initialStatuses }) {
   const { push } = useRouter();
 
   const { enqueueSnackbar } = useSnackbar();
@@ -94,18 +97,55 @@ export default function BlogNewPostForm() {
     setOpenPreview(false);
   };
 
+  useEffect(() => {
+    if (isEdit && currentJob) {
+      reset(defaultValues);
+    }
+    if (!isEdit) {
+      reset(defaultValues);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit, currentJob]);
+
   const onSubmit = async (data) => {
     try {
+      let response;
+      let successMessage;
+
+      if (isEdit) {
+        response = await axios.put(
+          `http://localhost:8080/api/v1/blogs/${currentDatabase._id}`,
+          data
+        );
+        successMessage = 'Updated Successfully';
+      } else {
+        response = await axios.post('http://localhost:8080/api/v1/blogs', data);
+        successMessage = 'Created Successfully';
+      }
+
       await new Promise((resolve) => setTimeout(resolve, 500));
       reset();
-      handleClosePreview();
-      enqueueSnackbar('Post success!');
-      push(PATH_DASHBOARD.blog.posts);
+      enqueueSnackbar(successMessage, { variant: 'success' }); // Show success snackbar
+      push(PATH_DASHBOARD.blog.root);
       console.log('DATA', data);
     } catch (error) {
       console.error(error);
+      enqueueSnackbar('An error occurred', { variant: 'error' }); // Show error snackbar
     }
   };
+
+  // const onSubmit = async (data) => {
+  //   try {
+  //     await new Promise((resolve) => setTimeout(resolve, 500));
+  //     reset();
+  //     handleClosePreview();
+  //     enqueueSnackbar('Post success!');
+  //     push(PATH_DASHBOARD.blog.posts);
+  //     console.log('DATA', data);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
 
   const handleDrop = useCallback(
     (acceptedFiles) => {

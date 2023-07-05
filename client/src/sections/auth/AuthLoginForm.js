@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import * as Yup from 'yup';
 // next
-import NextLink from 'next/link';
+import Link from 'next/link';
 // form
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 // @mui
-import { Link, Stack, Alert, IconButton, InputAdornment } from '@mui/material';
+import { Stack, Alert, IconButton, InputAdornment } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 // routes
 import { PATH_AUTH } from '../../routes/paths';
@@ -15,11 +15,13 @@ import { useAuthContext } from '../../auth/useAuthContext';
 // components
 import Iconify from '../../components/iconify';
 import FormProvider, { RHFTextField } from '../../components/hook-form';
-
+import { useSnackbar } from '../../components/snackbar';
+import axios from 'axios';
 // ----------------------------------------------------------------------
 
 export default function AuthLoginForm() {
   const { login } = useAuthContext();
+  const { enqueueSnackbar } = useSnackbar();
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -48,6 +50,7 @@ export default function AuthLoginForm() {
   const onSubmit = async (data) => {
     try {
       await login(data.email, data.password);
+      enqueueSnackbar('Successfully Logged In!');
     } catch (error) {
       console.error(error);
       reset();
@@ -82,20 +85,11 @@ export default function AuthLoginForm() {
       </Stack>
 
       <Stack alignItems="flex-end" sx={{ my: 2 }}>
-        <Link
-          component={NextLink}
-          href={PATH_AUTH.resetPassword}
-          variant="body2"
-          color="inherit"
-          underline="always"
-        >
-          Forgot password?
-        </Link>
+        <Link href="/auth/reset-password">Forgot password?</Link>
       </Stack>
 
       <LoadingButton
         fullWidth
-        
         size="large"
         type="submit"
         variant="contained"

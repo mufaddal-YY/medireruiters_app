@@ -1,316 +1,272 @@
 import PropTypes from 'prop-types';
 import * as Yup from 'yup';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+
 // next
 import { useRouter } from 'next/router';
+
 // form
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+
 // @mui
 import { LoadingButton } from '@mui/lab';
-import { Box, Card, Grid, Stack, Typography, InputAdornment } from '@mui/material';
+import { Grid, Stack, Typography } from '@mui/material';
+
 // routes
 import { PATH_DASHBOARD } from '../../../routes/paths';
+
 // components
 import { useSnackbar } from '../../../components/snackbar';
-import FormProvider, {
-  RHFSwitch,
-  RHFEditor,
-  RHFUpload,
-  RHFTextField,
-  RHFRadioGroup,
-  RHFAutocomplete,
-  RHFMultiSelect,
-} from '../../../components/hook-form';
+import FormProvider, { RHFSelect, RHFTextField } from '../../../components/hook-form';
+import axios from 'axios';
 
 // ----------------------------------------------------------------------
 
-const GENDER_OPTION = [
-  { label: 'Men', value: 'Men' },
-  { label: 'Women', value: 'Women' },
-  { label: 'Kids', value: 'Kids' },
-];
+const statusess = ['Active', 'Inactive'];
 
-const CATEGORY_OPTION = [
-  { group: 'Clothing', classify: ['Shirts', 'T-shirts', 'Jeans', 'Leather'] },
-  { group: 'Tailored', classify: ['Suits', 'Blazers', 'Trousers', 'Waistcoats'] },
-  { group: 'Accessories', classify: ['Shoes', 'Backpacks and bags', 'Bracelets', 'Face masks'] },
-];
-
-const TAGS_OPTION = [
-  'Toy Story 3',
-  'Logan',
-  'Full Metal Jacket',
-  'Dangal',
-  'The Sting',
-  '2001: A Space Odyssey',
-  "Singin' in the Rain",
-  'Toy Story',
-  'Bicycle Thieves',
-  'The Kid',
-  'Inglourious Basterds',
-  'Snatch',
-  '3 Idiots',
-];
-
-const OPTIONS = [
-  { value: 'option 1', label: 'Option 1' },
-  { value: 'option 2', label: 'Option 2' },
-  { value: 'option 3', label: 'Option 3' },
-  { value: 'option 4', label: 'Option 4' },
-  { value: 'option 5', label: 'Option 5' },
-  { value: 'option 6', label: 'Option 6' },
-  { value: 'option 7', label: 'Option 7' },
-  { value: 'option 8', label: 'Option 8' },
-];
-
-// ----------------------------------------------------------------------
-
-ProductNewEditForm.propTypes = {
+JobNewEditForm.propTypes = {
   isEdit: PropTypes.bool,
-  currentProduct: PropTypes.object,
+  currentJob: PropTypes.object,
 };
 
-export default function ProductNewEditForm({ isEdit, currentProduct }) {
+export default function JobNewEditForm({ isEdit = false, currentJob, initialStatuses }) {
   const { push } = useRouter();
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const NewProductSchema = Yup.object().shape({
-    name: Yup.string().required('Name is required'),
-    images: Yup.array().min(1, 'Images is required'),
-    tags: Yup.array().min(2, 'Must have at least 2 tags'),
-    price: Yup.number().moreThan(0, 'Price should not be $0.00'),
-    description: Yup.string().required('Description is required'),
+  const NewJobSchema = Yup.object().shape({
+    jobTitle: Yup.string().required('Job title is required'),
+    qualification: Yup.string().required('Qualification is required'),
+    experience: Yup.string().required('Experience is required'),
+    equipment: Yup.string().required('Equipments Status is required'),
+    opd: Yup.string().required('OPD info is required'),
+    occupancy: Yup.string().required('Occupancy Status is required'),
+    salary: Yup.string().required('Salary is required'),
+    holidays: Yup.string().required('Holidays is required'),
+    conference: Yup.string().required('Conference Leaves is required'),
+    accommodation: Yup.string().required('Accommodation info is required'),
+    lang: Yup.string().required('Language is a must'),
+    status: Yup.string().required('Status is required'),
   });
 
   const defaultValues = useMemo(
     () => ({
-      name: currentProduct?.name || '',
-      description: currentProduct?.description || '',
-      images: currentProduct?.images || [],
-      code: currentProduct?.code || '',
-      sku: currentProduct?.sku || '',
-      price: currentProduct?.price || 0,
-      priceSale: currentProduct?.priceSale || 0,
-      tags: currentProduct?.tags || [TAGS_OPTION[0]],
-      inStock: true,
-      taxes: true,
-      gender: currentProduct?.gender || GENDER_OPTION[2].value,
-      category: currentProduct?.category || CATEGORY_OPTION[0].classify[1],
+      jobTitle: currentJob?.jobTitle || '',
+      qualification: currentJob?.qualification || '',
+      experience: currentJob?.experience || '',
+      equipment: currentJob?.equipment || '',
+      opd: currentJob?.opd || '',
+      occupancy: currentJob?.occupancy || '',
+      salary: currentJob?.salary || '',
+      holidays: currentJob?.holidays || '',
+      conference: currentJob?.conference || '',
+      accommodation: currentJob?.accommodation || '',
+      lang: currentJob?.lang || '',
+      status: currentJob?.status || 'Active',
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentProduct]
+    [currentJob]
   );
 
   const methods = useForm({
-    resolver: yupResolver(NewProductSchema),
+    resolver: yupResolver(NewJobSchema),
     defaultValues,
   });
 
   const {
     reset,
-    watch,
-    setValue,
+    control,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  const values = watch();
-
   useEffect(() => {
-    if (isEdit && currentProduct) {
+    if (isEdit && currentJob) {
       reset(defaultValues);
     }
     if (!isEdit) {
       reset(defaultValues);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, currentProduct]);
+  }, [isEdit, currentJob]);
 
   const onSubmit = async (data) => {
     try {
+      let response;
+      let successMessage;
+
+      if (isEdit) {
+        response = await axios.put(`http://localhost:8080/api/v1/jobs/${currentJob._id}`, data);
+        successMessage = 'Updated Successfully';
+      } else {
+        response = await axios.post('http://localhost:8080/api/v1/jobs', data);
+        successMessage = 'Created Successfully';
+      }
+
       await new Promise((resolve) => setTimeout(resolve, 500));
       reset();
-      enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
-      push(PATH_DASHBOARD.eCommerce.list);
+      enqueueSnackbar(successMessage, { variant: 'success' }); // Show success snackbar
+      push(PATH_DASHBOARD.general.jobs);
       console.log('DATA', data);
     } catch (error) {
       console.error(error);
+      enqueueSnackbar('An error occurred', { variant: 'error' }); // Show error snackbar
     }
-  };
-
-  const handleDrop = useCallback(
-    (acceptedFiles) => {
-      const files = values.images || [];
-
-      const newFiles = acceptedFiles.map((file) =>
-        Object.assign(file, {
-          preview: URL.createObjectURL(file),
-        })
-      );
-
-      setValue('images', [...files, ...newFiles], { shouldValidate: true });
-    },
-    [setValue, values.images]
-  );
-
-  const handleRemoveFile = (inputFile) => {
-    const filtered = values.images && values.images?.filter((file) => file !== inputFile);
-    setValue('images', filtered);
-  };
-
-  const handleRemoveAllFiles = () => {
-    setValue('images', []);
   };
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Grid container spacing={3}>
         <Grid item xs={12} md={12}>
-          
-            <Stack spacing={3}>
-              <Stack spacing={1}>
+          <Stack spacing={2}>
+            <Stack spacing={2} direction={{ md: 'row', sm: 'column' }}>
+              <Stack spacing={1} sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
                   Job Title
                 </Typography>
-                <RHFTextField name="title" />
+                <RHFTextField name="jobTitle" />
               </Stack>
 
-              <Stack spacing={1}>
+              <Stack
+                spacing={1}
+                mb={3}
+                sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}
+              >
                 <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
-                  Job Description
+                  Qualification
                 </Typography>
-
-                <RHFEditor full name="description" />
+                <RHFTextField fullWidth name="qualification" />
               </Stack>
-              <Grid md={12}></Grid>
-
-              <Stack spacing={3} direction={'row'}>
-                <Stack spacing={1} sx={{ width: '50%', display: 'flex', flexDirection: 'column' }}>
-                  <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
-                    Location
-                  </Typography>
-                  <RHFTextField fullWidth name="location" />
-                </Stack>
-
-                <Stack  spacing={1} sx={{ width: '50%', display: 'flex', flexDirection: 'column' }}>
-                  <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
-                    Role
-                  </Typography>
-                  <RHFTextField name="role" />
-                </Stack>
-              </Stack>
-
-              <Stack spacing={1}>
-                <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
-                  Skills Required
-                </Typography>
-                <RHFMultiSelect chip checkbox name="skills" options={OPTIONS} />
-              </Stack>
-
-              {/* <Stack spacing={1}>
-                <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
-                  Images
-                </Typography>
-
-                <RHFUpload
-                  multiple
-                  thumbnail
-                  name="images"
-                  maxSize={3145728}
-                  onDrop={handleDrop}
-                  onRemove={handleRemoveFile}
-                  onRemoveAll={handleRemoveAllFiles}
-                  onUpload={() => console.log('ON UPLOAD')}
-                />
-              </Stack> */}
-
-              <LoadingButton type="submit" variant="contained" size="large" loading={isSubmitting}>
-                {!isEdit ? 'Post Job' : 'Save Changes'}
-              </LoadingButton>
             </Stack>
-         
-        </Grid>
 
-        {/* <Grid item xs={12} md={4}>
-          <Stack spacing={3}>
-            <Card sx={{ p: 3 }}>
-              <RHFSwitch name="inStock" label="In stock" />
-
-              <Stack spacing={3} mt={2}>
-                <RHFTextField name="code" label="Product Code" />
-
-                <RHFTextField name="sku" label="Product SKU" />
-
-                <Stack spacing={1}>
-                  <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
-                    Gender
-                  </Typography>
-
-                  <RHFRadioGroup row spacing={4} name="gender" options={GENDER_OPTION} />
-                </Stack>
-
-                <RHFAutocomplete
-                  name="tags"
-                  label="Tags"
-                  multiple
-                  freeSolo
-                  options={TAGS_OPTION.map((option) => option)}
-                  ChipProps={{ size: 'small' }}
-                />
-              </Stack>
-            </Card>
-
-            <Card sx={{ p: 3 }}>
-              <Stack spacing={3} mb={2}>
-                <RHFTextField
-                  name="price"
-                  label="Regular Price"
-                  placeholder="0.00"
-                  onChange={(event) =>
-                    setValue('price', Number(event.target.value), { shouldValidate: true })
-                  }
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Box component="span" sx={{ color: 'text.disabled' }}>
-                          $
-                        </Box>
-                      </InputAdornment>
-                    ),
-                    type: 'number',
-                  }}
-                />
-
-                <RHFTextField
-                  name="priceSale"
-                  label="Sale Price"
-                  placeholder="0.00"
-                  onChange={(event) => setValue('priceSale', Number(event.target.value))}
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Box component="span" sx={{ color: 'text.disabled' }}>
-                          $
-                        </Box>
-                      </InputAdornment>
-                    ),
-                    type: 'number',
-                  }}
-                />
+            <Stack spacing={2} direction={{ md: 'row', sm: 'column' }}>
+              <Stack
+                spacing={1}
+                mb={1}
+                sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}
+              >
+                <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                  Experience
+                </Typography>
+                <RHFTextField fullWidth name="experience" />
               </Stack>
 
-              <RHFSwitch name="taxes" label="Price includes taxes" />
-            </Card>
+              <Stack
+                spacing={1}
+                mb={1}
+                sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}
+              >
+                <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                  Equipment
+                </Typography>
+                <RHFTextField fullWidth name="equipment" />
+              </Stack>
+            </Stack>
+
+            <Stack spacing={2} direction={{ md: 'row', sm: 'column' }}>
+              <Stack
+                spacing={1}
+                mb={1}
+                sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}
+              >
+                <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                  OPD of Dept.
+                </Typography>
+                <RHFTextField fullWidth name="opd" />
+              </Stack>
+
+              <Stack
+                spacing={1}
+                mb={1}
+                sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}
+              >
+                <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                  % Occupancy
+                </Typography>
+                <RHFTextField fullWidth name="occupancy" />
+              </Stack>
+
+              <Stack
+                spacing={1}
+                mb={1}
+                sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}
+              >
+                <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                  Salary
+                </Typography>
+                <RHFTextField fullWidth name="salary" />
+              </Stack>
+            </Stack>
+
+            <Stack spacing={2} direction={{ md: 'row', sm: 'column' }}>
+              <Stack
+                spacing={1}
+                mb={1}
+                sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}
+              >
+                <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                  Annual Holidays
+                </Typography>
+                <RHFTextField fullWidth name="holidays" />
+              </Stack>
+
+              <Stack
+                spacing={1}
+                mb={1}
+                sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}
+              >
+                <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                  Conference Leaves
+                </Typography>
+                <RHFTextField fullWidth name="conference" />
+              </Stack>
+            </Stack>
+
+            <Stack spacing={2} direction={{ md: 'row', sm: 'column' }}>
+              <Stack
+                spacing={1}
+                mb={2}
+                sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}
+              >
+                <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                  Accomodation
+                </Typography>
+                <RHFTextField fullWidth name="accommodation" />
+              </Stack>
+
+              <Stack
+                spacing={1}
+                mb={2}
+                sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}
+              >
+                <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                  Language
+                </Typography>
+                <RHFTextField fullWidth name="lang" />
+              </Stack>
+              <Stack
+                spacing={1}
+                mb={2}
+                sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}
+              >
+                <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                  Job Status
+                </Typography>
+                <RHFSelect native name="status" placeholder="Status">
+                  {statusess.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </RHFSelect>
+              </Stack>
+            </Stack>
 
             <LoadingButton type="submit" variant="contained" size="large" loading={isSubmitting}>
-              {!isEdit ? 'Create Product' : 'Save Changes'}
+              {!isEdit ? 'Post Job' : 'Save Changes'}
             </LoadingButton>
           </Stack>
-        </Grid> */}
+        </Grid>
       </Grid>
     </FormProvider>
   );

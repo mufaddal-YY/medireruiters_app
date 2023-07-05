@@ -29,11 +29,13 @@ export default function BlogPostsSearch() {
     try {
       setSearchPosts(value);
       if (value) {
-        const response = await axios.get('/api/blog/posts/search', {
+        const response = await axios.get('http://localhost:8080/api/v1/blogs', {
           params: { query: value },
         });
-
-        setSearchResults(response.data.results);
+  
+        setSearchResults(response.data); // Update to set the search results from the response data
+      } else {
+        setSearchResults([]); // Clear the search results if the value is empty
       }
     } catch (error) {
       console.error(error);

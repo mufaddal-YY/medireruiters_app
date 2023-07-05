@@ -1,19 +1,14 @@
 import * as Yup from 'yup';
-// next
 import { useRouter } from 'next/router';
-// form
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
-// @mui
 import { LoadingButton } from '@mui/lab';
-// routes
-import { PATH_AUTH } from '../../routes/paths';
-// components
+import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
+
 import FormProvider, { RHFTextField } from '../../components/hook-form';
 
-// ----------------------------------------------------------------------
-
 export default function AuthResetPasswordForm() {
+  const auth = getAuth();
   const { push } = useRouter();
 
   const ResetPasswordSchema = Yup.object().shape({
@@ -22,21 +17,30 @@ export default function AuthResetPasswordForm() {
 
   const methods = useForm({
     resolver: yupResolver(ResetPasswordSchema),
-    defaultValues: { email: 'demo@minimals.cc' },
+    defaultValues: { email: '' },
   });
 
   const {
     handleSubmit,
+    reset,
+    setError,
     formState: { isSubmitting },
   } = methods;
 
   const onSubmit = async (data) => {
+    const { email } = data;
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      sessionStorage.setItem('email-recovery', data.email);
-      push(PATH_AUTH.newPassword);
+      await sendPasswordResetEmail(auth, email);
+
+      // Password reset email sent successfully
+      push('/'); // Replace with the desired page to redirect after the password reset email is sent
     } catch (error) {
-      console.error(error);
+      // Handle error
+      setError('email', {
+        type: 'manual',
+        message: error.message,
+      });
     }
   };
 

@@ -1,5 +1,5 @@
 import { paramCase } from 'change-case';
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 // next
 import Head from 'next/head';
@@ -20,16 +20,10 @@ import {
   TableContainer,
   Box,
   Stack,
-  InputAdornment,
 } from '@mui/material';
-
-import TextField from '@mui/material/TextField';
 
 // routes
 import { PATH_DASHBOARD } from '../../routes/paths';
-
-// _mock_
-import { _userList } from '../../_mock/arrays/_user';
 
 // layouts
 import DashboardLayout from '../../layouts/dashboard';
@@ -54,48 +48,22 @@ import {
 import { FileNewFolderDialog } from '../../sections/@dashboard/file';
 
 // sections
-import { UserTableToolbar, JobTableRow } from '../../sections/@dashboard/jobs/list';
-import { FormProvider } from 'react-hook-form';
-import { CustomSmallSelect } from 'src/components/custom-input';
-import SearchNotFound from '../../components/search-not-found';
-import { CustomTextField } from '../../components/custom-input';
+import { JobTableToolbar, JobTableRow } from '../../sections/@dashboard/jobs/list';
+
+import { useSnackbar } from '../../components/snackbar';
+
+import axios from 'axios';
 
 // ----------------------------------------------------------------------
 
-const STATUS_OPTIONS = ['all', 'active', 'inactive', 'closed'];
-
-const ROLE_OPTIONS = [
-  'all',
-  'ux designer',
-  'full stack designer',
-  'backend developer',
-  'project manager',
-  'leader',
-  'ui designer',
-  'ui/ux designer',
-  'front end developer',
-  'full stack developer',
-];
-
-const FILTER_YEARS = [
-  '2023',
-  '2022',
-  '2021',
-  '2020',
-  '2019',
-  '2018',
-  '2017',
-  '2016',
-  '2015',
-  '2014',
-];
+const STATUS_OPTIONS = ['all', 'Active', 'Inactive'];
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'Company Name', align: 'left' },
-  { id: 'role', label: 'Posted by', align: 'left' },
-  { id: 'applications', label: 'Role', align: 'left' },
-  { id: 'date', label: 'Created On', align: 'left' },
-  { id: 'status', label: 'Status', align: 'left' },
+  { id: 'jobTitle', label: 'Job Role', align: 'center' },
+  { id: 'name', label: 'Salary', align: 'left' },
+  { id: 'applications', label: 'Language', align: 'left' },
+  { id: 'date', label: 'Created on', align: 'left' },
+  { id: 'status', label: 'Status', align: 'center' },
   { id: '' },
 ];
 
@@ -105,7 +73,9 @@ UserListPage.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
 
 // ----------------------------------------------------------------------
 
-export default function UserListPage({ jobs, searchJobs, onSearchJobs }) {
+export default function UserListPage() {
+  const { enqueueSnackbar } = useSnackbar();
+
   const {
     dense,
     page,
@@ -125,13 +95,25 @@ export default function UserListPage({ jobs, searchJobs, onSearchJobs }) {
     onChangeRowsPerPage,
   } = useTable();
 
-  const FILE_TYPE_OPTIONS = ['excel'];
-
   const { themeStretch } = useSettingsContext();
 
   const { push } = useRouter();
 
-  const [tableData, setTableData] = useState(_userList);
+  const [tableData, setTableData] = useState([]);
+
+  const getTableData = useCallback(async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/api/v1/jobs');
+      console.log('API response:', response.data);
+      setTableData(response.data);
+    } catch (error) {
+      console.error('API error:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    getTableData();
+  }, []);
 
   const [openConfirm, setOpenConfirm] = useState(false);
 
@@ -153,7 +135,7 @@ export default function UserListPage({ jobs, searchJobs, onSearchJobs }) {
 
   const denseHeight = dense ? 52 : 72;
 
-  const isFiltered = filterName !== '' || filterRole !== 'all' || filterStatus !== 'all';
+  const isFiltered = filterName !== '' || filterStatus !== 'all';
 
   const [openUploadFile, setOpenUploadFile] = useState(false);
 
@@ -185,37 +167,65 @@ export default function UserListPage({ jobs, searchJobs, onSearchJobs }) {
     setFilterRole(event.target.value);
   };
 
-  const handleDeleteRow = (id) => {
-    const deleteRow = tableData.filter((row) => row.id !== id);
-    setSelected([]);
-    setTableData(deleteRow);
+  const handleDeleteRow = async (_id) => {
+    try {
+      const deleteRow = tableData.filter((row) => row._id !== _id);
+      setSelected([]);
+      setTableData(deleteRow);
 
-    if (page > 0) {
-      if (dataInPage.length < 2) {
-        setPage(page - 1);
+      if (page > 0) {
+        if (dataInPage.length < 2) {
+          setPage(page - 1);
+        }
       }
+
+      await axios.delete(`http://localhost:8080/api/v1/jobs/${_id}`);
+
+      // Show success snackbar
+      enqueueSnackbar('Job Deleted', { variant: 'success' });
+    } catch (error) {
+      console.error('Error deleting row:', error);
+      // Handle error or show an error notification
+      enqueueSnackbar('Error deleting user', { variant: 'error' });
     }
   };
 
-  const handleDeleteRows = (selectedRows) => {
-    const deleteRows = tableData.filter((row) => !selectedRows.includes(row.id));
-    setSelected([]);
-    setTableData(deleteRows);
+  const handleDeleteRows = async (selectedRows) => {
+    try {
+      const deleteRows = tableData.filter((row) => !selectedRows.includes(row._id));
+      setSelected([]);
+      setTableData(deleteRows);
 
-    if (page > 0) {
-      if (selectedRows.length === dataInPage.length) {
-        setPage(page - 1);
-      } else if (selectedRows.length === dataFiltered.length) {
-        setPage(0);
-      } else if (selectedRows.length > dataInPage.length) {
-        const newPage = Math.ceil((tableData.length - selectedRows.length) / rowsPerPage) - 1;
-        setPage(newPage);
+      if (page > 0) {
+        if (selectedRows.length === dataInPage.length) {
+          setPage(page - 1);
+        } else if (selectedRows.length === dataFiltered.length) {
+          setPage(0);
+        } else if (selectedRows.length > dataInPage.length) {
+          const newPage = Math.ceil((tableData.length - selectedRows.length) / rowsPerPage) - 1;
+          setPage(newPage);
+        }
       }
+
+      // Delete each selected row from the database
+      for (const rowId of selectedRows) {
+        await axios.delete(`http://localhost:8080/api/v1/jobs/${rowId}`);
+      }
+
+      // Handle success or show a notification
+      enqueueSnackbar('Jobs Deleted', { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar('Error deleting', { variant: 'error' });
+      // Handle error or show an error notification
     }
   };
 
-  const handleEditRow = (id) => {
-    push(PATH_DASHBOARD.candidate.edit(paramCase(id)));
+  const handleEditRow = (_id) => {
+    push(PATH_DASHBOARD.jobs.edit(paramCase(_id)));
+  };
+
+  const handleDetails = (_id) => {
+    push(PATH_DASHBOARD.jobs.detail(paramCase(_id)));
   };
 
   const handleResetFilter = () => {
@@ -231,8 +241,6 @@ export default function UserListPage({ jobs, searchJobs, onSearchJobs }) {
   const handleCloseUploadFile = () => {
     setOpenUploadFile(false);
   };
-
-  const [seriesData, setSeriesData] = useState('2023');
 
   return (
     <>
@@ -256,23 +264,9 @@ export default function UserListPage({ jobs, searchJobs, onSearchJobs }) {
                   direction={{ xs: 'column', sm: 'row', md: 'row' }}
                   sx={{ my: 1 }}
                 >
-                  <CustomTextField
-                    width={220}
-                    size="small"
-                    value={searchJobs}
-                    onChange={onSearchJobs}
-                    placeholder="Search jobs..."
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
                   <Button
                     href={PATH_DASHBOARD.jobs.new}
-                    variant="soft"
+                    variant="contained"
                     size="medium"
                     startIcon={<Iconify icon="eva:plus-fill" />}
                   >
@@ -300,20 +294,18 @@ export default function UserListPage({ jobs, searchJobs, onSearchJobs }) {
                 <Tab key={tab} label={tab} value={tab} />
               ))}
             </Tabs>
-            <CustomSmallSelect
-              sx={{ py: 1.5, paddingRight: 2 }}
-              value={seriesData}
-              onChange={(event) => setSeriesData(event.target.value)}
-            >
-              {FILTER_YEARS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </CustomSmallSelect>
           </Stack>
 
           <Divider />
+
+          <JobTableToolbar
+            isFiltered={isFiltered}
+            filterName={filterName}
+            filterRole={filterRole}
+            onFilterName={handleFilterName}
+            onFilterRole={handleFilterRole}
+            onResetFilter={handleResetFilter}
+          />
 
           <TableContainer sx={{ position: 'relative', overflow: 'unset' }}>
             <TableSelectedAction
@@ -323,7 +315,7 @@ export default function UserListPage({ jobs, searchJobs, onSearchJobs }) {
               onSelectAllRows={(checked) =>
                 onSelectAllRows(
                   checked,
-                  tableData.map((row) => row.id)
+                  tableData.map((row) => row._id)
                 )
               }
               action={
@@ -359,7 +351,7 @@ export default function UserListPage({ jobs, searchJobs, onSearchJobs }) {
                   onSelectAllRows={(checked) =>
                     onSelectAllRows(
                       checked,
-                      tableData.map((row) => row.id)
+                      tableData.map((row) => row._id)
                     )
                   }
                 />
@@ -371,10 +363,11 @@ export default function UserListPage({ jobs, searchJobs, onSearchJobs }) {
                       <JobTableRow
                         key={row.id}
                         row={row}
-                        selected={selected.includes(row.id)}
-                        onSelectRow={() => onSelectRow(row.id)}
-                        onDeleteRow={() => handleDeleteRow(row.id)}
-                        onEditRow={() => handleEditRow(row.name)}
+                        selected={selected.includes(row._id)}
+                        onSelectRow={() => onSelectRow(row._id)}
+                        onDeleteRow={() => handleDeleteRow(row._id)}
+                        onEditRow={() => handleEditRow(row.jobTitle)}
+                        onDetails={() => handleDetails(row.jobTitle)}
                       />
                     ))}
 
@@ -431,6 +424,7 @@ export default function UserListPage({ jobs, searchJobs, onSearchJobs }) {
 // ----------------------------------------------------------------------
 
 function applyFilter({ inputData, comparator, filterName, filterStatus, filterRole }) {
+ 
   const stabilizedThis = inputData.map((el, index) => [el, index]);
 
   stabilizedThis.sort((a, b) => {
@@ -443,16 +437,16 @@ function applyFilter({ inputData, comparator, filterName, filterStatus, filterRo
 
   if (filterName) {
     inputData = inputData.filter(
-      (user) => user.name.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
+      (job) => job.jobTitle.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
     );
   }
 
   if (filterStatus !== 'all') {
-    inputData = inputData.filter((user) => user.status === filterStatus);
+    inputData = inputData.filter((job) => job.status === filterStatus);
   }
 
   if (filterRole !== 'all') {
-    inputData = inputData.filter((user) => user.role === filterRole);
+    inputData = inputData.filter((job) => job.role === filterRole);
   }
 
   return inputData;

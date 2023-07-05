@@ -1,5 +1,6 @@
 // next
 import Head from 'next/head';
+
 // @mui
 import { useTheme } from '@mui/material/styles';
 import { Container, Grid, Stack, Button, Card, Box, InputAdornment } from '@mui/material';
@@ -32,6 +33,9 @@ import Iconify from '../../components/iconify';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { CustomTextField } from 'src/components/custom-input';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+
 // ----------------------------------------------------------------------
 
 GeneralAppPage.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
@@ -95,6 +99,26 @@ export default function GeneralAppPage({ searchJobs, onSearchJobs }) {
     }
   };
 
+  const [jobData, setJobData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/v1/jobs');
+        const jobDdata = response.data;
+        setJobData(jobDdata); // Use the correct variable here
+      } catch (error) {
+        console.error('API error:', error);
+      }
+    };
+  
+    fetchData();
+  }, []);
+
+
+  
+  
+
   return (
     <>
       <Head>
@@ -139,8 +163,8 @@ export default function GeneralAppPage({ searchJobs, onSearchJobs }) {
           <Grid item xs={12} md={3}>
             <AppWidgetSummary
               title="Jobs Posted"
-              percent={2.6}
-              total={18765}
+              // percent={2.6}
+              total={380}
               chart={{
                 colors: [theme.palette.primary.main],
                 series: [5, 18, 12, 51, 68, 11, 39, 37, 27, 20],
@@ -151,7 +175,7 @@ export default function GeneralAppPage({ searchJobs, onSearchJobs }) {
           <Grid item xs={12} md={3}>
             <AppWidgetSummary
               title="Active Users"
-              percent={0.2}
+             
               total={4876}
               chart={{
                 colors: [theme.palette.info.main],
@@ -163,7 +187,7 @@ export default function GeneralAppPage({ searchJobs, onSearchJobs }) {
           <Grid item xs={12} md={3}>
             <AppWidgetSummary
               title="Applications"
-              percent={-0.1}
+              // percent={-0.1}
               total={678}
               chart={{
                 colors: [theme.palette.warning.main],
@@ -174,7 +198,7 @@ export default function GeneralAppPage({ searchJobs, onSearchJobs }) {
           <Grid item xs={12} md={3}>
             <AppWidgetSummary
               title="Placed Candidates "
-              percent={10}
+              // percent={10}
               total={68}
               chart={{
                 colors: [theme.palette.success.main],
@@ -235,15 +259,15 @@ export default function GeneralAppPage({ searchJobs, onSearchJobs }) {
             <AppCandidates
               title="Candidates"
               tableData={TABLE_HEAD}
-              // tableLabels={[
-              //   { id: 'booker', label: 'Name' },
-              //   { id: 'checkIn', label: 'Date Applied' },
-              //   { id: 'checkOut', label: 'Date Placed' },
-              //   { id: 'status', label: 'Status' },
-              //   { id: 'phone', label: 'Phone' },
-              //   { id: 'roomType', label: 'Room Type' },
-              //   { id: '' },
-              // ]}
+              tableLabels={[
+                { id: 'booker', label: 'Name' },
+                { id: 'checkIn', label: 'Date Applied' },
+                { id: 'checkOut', label: 'Date Placed' },
+                { id: 'status', label: 'Status' },
+                { id: 'phone', label: 'Phone' },
+                { id: 'roomType', label: 'Room Type' },
+                { id: '' },
+              ]}
             />
           </Grid> */}
         </Grid>

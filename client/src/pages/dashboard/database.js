@@ -1,9 +1,11 @@
+import PropTypes from 'prop-types';
 import { paramCase } from 'change-case';
-import { Children, useState } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+
 // next
 import Head from 'next/head';
-import NextLink from 'next/link';
 import { useRouter } from 'next/router';
+
 // @mui
 import {
   Tab,
@@ -21,21 +23,19 @@ import {
   Box,
   Grid,
   Stack,
-  Switch,
-  Typography,
-  FormControlLabel,
-  Input,
 } from '@mui/material';
-import TextField from '@mui/material/TextField';
+import { useSnackbar } from '../../components/snackbar';
+import * as Yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
 
 // routes
 import { PATH_DASHBOARD } from '../../routes/paths';
-// _mock_
-import { _userList } from '../../_mock/arrays';
+
 // layouts
 import DashboardLayout from '../../layouts/dashboard';
-// components
 
+// components
+import { useForm } from 'react-hook-form';
 import Iconify from '../../components/iconify';
 import Scrollbar from '../../components/scrollbar';
 import ConfirmDialog from '../../components/confirm-dialog';
@@ -51,55 +51,87 @@ import {
   TableSelectedAction,
   TablePaginationCustom,
 } from '../../components/table';
-import { RHFSelect, RHFSwitch, RHFTextField, RHFUploadAvatar } from '../../components/hook-form';
+import FormProvider, { RHFTextField } from '../../components/hook-form';
 
-import {
-  FileListView,
-  FileGridView,
-  FileFilterType,
-  FileFilterName,
-  FileFilterButton,
-  FileChangeViewButton,
-  FileNewFolderDialog,
-} from '../../sections/@dashboard/file';
+import { FileNewFolderDialog } from '../../sections/@dashboard/file';
 // sections
-import { UserTableToolbar, UserTableRow } from '../../sections/@dashboard/user/list';
+import { DatabaseTableToolbar, DatabaseTableRow } from '../../sections/@dashboard/database/list';
 import { label } from 'yet-another-react-lightbox/core';
-import { FormProvider } from 'react-hook-form';
+import { LoadingButton } from '@mui/lab';
+import axios from 'axios';
+import { _userList } from '../../_mock/arrays';
 
 // ----------------------------------------------------------------------
 
 const STATUS_OPTIONS = ['all', 'active', 'blacklisted'];
 
-const ROLE_OPTIONS = [
-  'all',
-  'ux designer',
-  'full stack designer',
-  'backend developer',
-  'project manager',
-  'leader',
-  'ui designer',
-  'ui/ux designer',
-  'front end developer',
-  'full stack developer',
-];
+// const ROLE_OPTIONS = [
+//   'all',
+//   'ux designer',
+//   'full stack designer',
+//   'backend developer',
+//   'project manager',
+//   'leader',
+//   'ui designer',
+//   'ui/ux designer',
+//   'front end developer',
+//   'full stack developer',
+// ];
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'Company', align: 'left' },
-  { id: 'company', label: 'Email', align: 'left' },
-  { id: 'role', label: 'Phone Number', align: 'left' },
-  { id: 'isVerified', label: 'Verified', align: 'center' },
-  { id: 'status', label: 'Status', align: 'left' },
+  { id: 'name', label: 'Company Name', align: 'left' },
+  { id: 'hrName', label: 'HR Name', align: 'left' },
+  { id: 'email', label: 'Email', align: 'left' },
+  { id: 'phone', label: 'Phone Number', align: 'left' },
+  { id: 'requirement', label: 'Requirement', align: 'left' },
+  { id: 'location', label: 'location', align: 'left' },
   { id: '' },
 ];
 
 // ----------------------------------------------------------------------
 
-UserListPage.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+DatabasePage.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
 
 // ----------------------------------------------------------------------
 
-export default function UserListPage() {
+export default function DatabasePage({ isEdit = false, currentDatabase, initialStatuses }) {
+  const { push } = useRouter();
+
+  const { enqueueSnackbar } = useSnackbar();
+
+  const NewDatabaseSchema = Yup.object().shape({
+    companyName: Yup.string().required('Hospital/Company Name is required'),
+    hrName: Yup.string().required('HR name is required'),
+    phone: Yup.string().required('Phone is required'),
+    email: Yup.string().required('Email Status is required'),
+    location: Yup.string().required('Location is required'),
+    requirement: Yup.string().required('Requirement is required'),
+  });
+
+  const defaultValues = useMemo(
+    () => ({
+      companyName: currentDatabase?.companyName || '',
+      hrName: currentDatabase?.hrName || '',
+      phone: currentDatabase?.phone || '',
+      email: currentDatabase?.email || '',
+      requirement: currentDatabase?.requirement || '',
+      location: currentDatabase?.location || '',
+    }),
+    [currentDatabase]
+  );
+
+  const methods = useForm({
+    resolver: yupResolver(NewDatabaseSchema),
+    defaultValues,
+  });
+
+  const {
+    reset,
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = methods;
+
   const {
     dense,
     page,
@@ -123,9 +155,23 @@ export default function UserListPage() {
 
   const { themeStretch } = useSettingsContext();
 
-  const { push } = useRouter();
+  const [tableData, setTableData] = useState([]);
 
-  const [tableData, setTableData] = useState(_userList);
+  const getTableData = useCallback(async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/api/v1/databases');
+      console.log('API response:', response.data);
+      setTableData(response.data);
+    } catch (error) {
+      console.error('API error:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    getTableData();
+  }, []);
+
+  const ROLE_OPTIONS = ['all', ...new Set(tableData.map((database) => database.requirement))];
 
   const [openConfirm, setOpenConfirm] = useState(false);
 
@@ -179,37 +225,88 @@ export default function UserListPage() {
     setFilterRole(event.target.value);
   };
 
-  const handleDeleteRow = (id) => {
-    const deleteRow = tableData.filter((row) => row.id !== id);
-    setSelected([]);
-    setTableData(deleteRow);
+  const onSubmit = async (data) => {
+    try {
+      let response;
+      let successMessage;
 
-    if (page > 0) {
-      if (dataInPage.length < 2) {
-        setPage(page - 1);
+      if (isEdit) {
+        response = await axios.put(
+          `http://localhost:8080/api/v1/databases/${currentDatabase._id}`,
+          data
+        );
+        successMessage = 'Updated Successfully';
+      } else {
+        response = await axios.post('http://localhost:8080/api/v1/databases', data);
+        successMessage = 'Created Successfully';
       }
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      reset();
+      enqueueSnackbar(successMessage, { variant: 'success' }); // Show success snackbar
+      push(PATH_DASHBOARD.general.database);
+      console.log('DATA', data);
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar('An error occurred', { variant: 'error' }); // Show error snackbar
     }
   };
 
-  const handleDeleteRows = (selectedRows) => {
-    const deleteRows = tableData.filter((row) => !selectedRows.includes(row.id));
-    setSelected([]);
-    setTableData(deleteRows);
+  const handleDeleteRow = async (_id) => {
+    try {
+      const deleteRow = tableData.filter((row) => row._id !== _id);
+      setSelected([]);
+      setTableData(deleteRow);
 
-    if (page > 0) {
-      if (selectedRows.length === dataInPage.length) {
-        setPage(page - 1);
-      } else if (selectedRows.length === dataFiltered.length) {
-        setPage(0);
-      } else if (selectedRows.length > dataInPage.length) {
-        const newPage = Math.ceil((tableData.length - selectedRows.length) / rowsPerPage) - 1;
-        setPage(newPage);
+      if (page > 0) {
+        if (dataInPage.length < 2) {
+          setPage(page - 1);
+        }
       }
+
+      await axios.delete(`http://localhost:8080/api/v1/databases/${_id}`);
+
+      // Show success snackbar
+      enqueueSnackbar('Deleted', { variant: 'success' });
+    } catch (error) {
+      console.error('Error deleting row:', error);
+      // Handle error or show an error notification
+      enqueueSnackbar('Error deleting user', { variant: 'error' });
     }
   };
 
-  const handleEditRow = (id) => {
-    push(PATH_DASHBOARD.user.edit(paramCase(id)));
+  const handleDeleteRows = async (selectedRows) => {
+    try {
+      const deleteRows = tableData.filter((row) => !selectedRows.includes(row._id));
+      setSelected([]);
+      setTableData(deleteRows);
+
+      if (page > 0) {
+        if (selectedRows.length === dataInPage.length) {
+          setPage(page - 1);
+        } else if (selectedRows.length === dataFiltered.length) {
+          setPage(0);
+        } else if (selectedRows.length > dataInPage.length) {
+          const newPage = Math.ceil((tableData.length - selectedRows.length) / rowsPerPage) - 1;
+          setPage(newPage);
+        }
+      }
+
+      // Delete each selected row from the database
+      for (const rowId of selectedRows) {
+        await axios.delete(`http://localhost:8080/api/v1/databases/${rowId}`);
+      }
+
+      // Handle success or show a notification
+      enqueueSnackbar('Deleted', { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar('Error deleting', { variant: 'error' });
+      // Handle error or show an error notification
+    }
+  };
+
+  const handleEditRow = (_id) => {
+    push(PATH_DASHBOARD.database.edit(paramCase(_id)));
   };
 
   const handleResetFilter = () => {
@@ -244,44 +341,55 @@ export default function UserListPage() {
 
         <FileNewFolderDialog open={openUploadFile} onClose={handleCloseUploadFile} />
 
-        <Grid sx={{mb: 2}} item xs={12} md={8}>
-          <Stack spacing={2} direction={{xs:"column", md:"row"}}>
-            <Stack direction="column" spacing={1.5} sx={{ flexGrow: 1 }}>
-              <Stack direction={{xs:"column", md:"row"}} spacing={2}>
-                <TextField fullWidth label="Company Name" variant="outlined" />
-                <TextField fullWidth label="Location" variant="outlined" />
-                <TextField fullWidth label="Requirement" variant="outlined" />
+        <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+          <Grid sx={{ mb: 2 }} item xs={12} md={8}>
+            <Stack spacing={2} direction={{ xs: 'column', md: 'row' }}>
+              <Stack direction="column" spacing={1.5} sx={{ flexGrow: 1 }}>
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                  <RHFTextField
+                    fullWidth
+                    name="companyName"
+                    label="Company Name"
+                    variant="outlined"
+                  />
+                  <RHFTextField fullWidth name="hrName" label="HR Name" variant="outlined" />
+                  <RHFTextField fullWidth name="email" label="Email" variant="outlined" />
+                </Stack>
+                <Stack spacing={2} direction={{ xs: 'column', md: 'row' }}>
+                  <RHFTextField fullWidth name="phone" label="Phone" variant="outlined" />
+                  <RHFTextField
+                    fullWidth
+                    name="requirement"
+                    label="Requirement"
+                    variant="outlined"
+                  />
+                  <RHFTextField fullWidth name="location" label="Location" variant="outlined" />
+                </Stack>
               </Stack>
-              <Stack spacing={2} direction={{xs:"column", md:"row"}}>
-                <TextField fullWidth  label="HR Name" variant="outlined" />
-                <TextField fullWidth  label="Phone" variant="outlined" />
-                <TextField fullWidth  label="Email" variant="outlined" />
+              <Stack spacing={2.5} direction="column">
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                  startIcon={<Iconify icon="eva:plus-fill" />}
+                >
+                  Add Client
+                </Button>
+                <Button
+                  variant="soft"
+                  size="large"
+                  startIcon={<Iconify icon="material-symbols:upload-rounded" />}
+                  onClick={handleOpenUploadFile}
+                >
+                  Upload
+                </Button>
               </Stack>
             </Stack>
-            <Stack spacing={2.5} direction="column">
-              <Button
-                
-                type='submit'
-                variant="contained"
-                size='large'
-                startIcon={<Iconify icon="eva:plus-fill" />}
-              >
-                Add Client
-              </Button>
-              <Button
-                variant="soft"
-                size='large'
-                startIcon={<Iconify icon="material-symbols:upload-rounded" />}
-                onClick={handleOpenUploadFile}
-              >
-                Upload
-              </Button>
-            </Stack>
-          </Stack>
-        </Grid>
+          </Grid>
+        </FormProvider>
 
         <Card>
-          <Tabs
+          {/* <Tabs
             value={filterStatus}
             onChange={handleFilterStatus}
             sx={{
@@ -292,11 +400,11 @@ export default function UserListPage() {
             {STATUS_OPTIONS.map((tab) => (
               <Tab key={tab} label={tab} value={tab} />
             ))}
-          </Tabs>
+          </Tabs> */}
 
           <Divider />
 
-          <UserTableToolbar
+          <DatabaseTableToolbar
             isFiltered={isFiltered}
             filterName={filterName}
             filterRole={filterRole}
@@ -314,7 +422,7 @@ export default function UserListPage() {
               onSelectAllRows={(checked) =>
                 onSelectAllRows(
                   checked,
-                  tableData.map((row) => row.id)
+                  tableData.map((row) => row._id)
                 )
               }
               action={
@@ -338,7 +446,7 @@ export default function UserListPage() {
                   onSelectAllRows={(checked) =>
                     onSelectAllRows(
                       checked,
-                      tableData.map((row) => row.id)
+                      tableData.map((row) => row._id)
                     )
                   }
                 />
@@ -347,13 +455,13 @@ export default function UserListPage() {
                   {dataFiltered
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((row) => (
-                      <UserTableRow
-                        key={row.id}
+                      <DatabaseTableRow
+                        key={row._id}
                         row={row}
-                        selected={selected.includes(row.id)}
-                        onSelectRow={() => onSelectRow(row.id)}
-                        onDeleteRow={() => handleDeleteRow(row.id)}
-                        onEditRow={() => handleEditRow(row.name)}
+                        selected={selected.includes(row._id)}
+                        onSelectRow={() => onSelectRow(row._id)}
+                        onDeleteRow={() => handleDeleteRow(row._id)}
+                        onEditRow={() => handleEditRow(row.companyName)}
                       />
                     ))}
 
@@ -422,16 +530,16 @@ function applyFilter({ inputData, comparator, filterName, filterStatus, filterRo
 
   if (filterName) {
     inputData = inputData.filter(
-      (user) => user.name.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
+      (database) => database.companyName.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
     );
   }
 
   if (filterStatus !== 'all') {
-    inputData = inputData.filter((user) => user.status === filterStatus);
+    inputData = inputData.filter((database) => database.requirement === filterStatus);
   }
 
   if (filterRole !== 'all') {
-    inputData = inputData.filter((user) => user.role === filterRole);
+    inputData = inputData.filter((database) => database.requirement === filterRole);
   }
 
   return inputData;

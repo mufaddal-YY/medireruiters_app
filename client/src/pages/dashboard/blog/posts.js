@@ -42,18 +42,33 @@ export default function BlogPostsPage() {
 
   const sortedPosts = applySortBy(posts, sortBy);
 
+  // const getAllPosts = useCallback(async () => {
+  //   try {
+  //     const response = await axios.get('http://localhost:8080/api/v1/blogs');
+  //     setPosts(response.data.posts);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+  //   getAllPosts();
+  // }, [getAllPosts]);
+
   const getAllPosts = useCallback(async () => {
     try {
-      const response = await axios.get('/api/blog/posts');
-      setPosts(response.data.posts);
+      const response = await axios.get('http://localhost:8080/api/v1/blogs');
+      console.log('API response:', response.data);
+      setPosts(response.data);
     } catch (error) {
-      console.error(error);
+      console.error('API error:', error);
     }
   }, []);
 
   useEffect(() => {
     getAllPosts();
-  }, [getAllPosts]);
+  }, []);
+
 
   const handleChangeSortBy = (event) => {
     setSortBy(event.target.value);
@@ -62,10 +77,10 @@ export default function BlogPostsPage() {
   return (
     <>
       <Head>
-        <title> Blog: Posts | Minimal UI</title>
+        <title> Blog: Posts | Medirecruiters</title>
       </Head>
 
-      <Container maxWidth={themeStretch ? false : 'lg'}>
+      <Container maxWidth={themeStretch ? false : 'xl'}>
         <CustomBreadcrumbs
           heading="Blog"
           links={[
@@ -99,9 +114,9 @@ export default function BlogPostsPage() {
         </Stack>
 
         <Grid container spacing={3}>
-          {(!posts.length ? [...Array(12)] : sortedPosts).map((post, index) =>
+          {(posts && posts.length ? sortedPosts : []).map((post, index) =>
             post ? (
-              <Grid key={post.id} item xs={12} sm={6} md={(index === 0 && 6) || 3}>
+              <Grid key={post._id} item xs={12} sm={6} md={(index === 0 && 6) || 3}>
                 <BlogPostCard post={post} index={index} />
               </Grid>
             ) : (

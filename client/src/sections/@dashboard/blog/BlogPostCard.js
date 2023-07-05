@@ -37,41 +37,31 @@ BlogPostCard.propTypes = {
 };
 
 export default function BlogPostCard({ post, index }) {
-  const isDesktop = useResponsive('up', 'md');
+  // const isDesktop = useResponsive('up', 'md');
 
-  const { cover, title, view, comment, share, author, createdAt } = post;
+  const { cover, title, view, comment, share, createdAt } = post;
 
-  const latestPost = index === 0 || index === 1 || index === 2;
+  // const latestPost = index === 0 || index === 1 || index === 2;
 
-  if (isDesktop && latestPost) {
-    return (
-      <Card>
-        <Avatar
-          alt={author.name}
-          src={author.avatarUrl}
-          sx={{
-            top: 24,
-            left: 24,
-            zIndex: 9,
-            position: 'absolute',
-          }}
-        />
+  // if (isDesktop && latestPost) {
+  //   return (
+  //     <Card>
 
-        <PostContent
-          title={title}
-          view={view}
-          comment={comment}
-          share={share}
-          createdAt={createdAt}
-          index={index}
-        />
+  //       <PostContent
+  //         title={title}
+  //         view={view}
+  //         comment={comment}
+  //         share={share}
+  //         createdAt={createdAt}
+  //         index={index}
+  //       />
 
-        <StyledOverlay />
+  //       <StyledOverlay />
 
-        <Image alt="cover" src={cover} sx={{ height: 360 }} />
-      </Card>
-    );
-  }
+  //       <Image alt="cover" src={cover} sx={{ height: 360 }} />
+  //     </Card>
+  //   );
+  // }
 
   return (
     <Card>
@@ -88,19 +78,7 @@ export default function BlogPostCard({ post, index }) {
           }}
         />
 
-        <Avatar
-          alt={author.name}
-          src={author.avatarUrl}
-          sx={{
-            left: 24,
-            zIndex: 9,
-            width: 32,
-            height: 32,
-            bottom: -16,
-            position: 'absolute',
-          }}
-        />
-
+       
         <Image alt="cover" src={cover} ratio="4/3" />
       </Box>
 

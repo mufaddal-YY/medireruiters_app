@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { paramCase } from 'change-case';
+
 // @mui
 import {
   Stack,
@@ -21,10 +23,12 @@ import ConfirmDialog from '../../../../components/confirm-dialog';
 import { phoneNumber } from 'src/_mock/assets';
 import { CustomSmallSelect } from 'src/components/custom-input';
 import { PATH_DASHBOARD } from 'src/routes/paths';
-import JobDetail from 'src/pages/dashboard/jobs/[title]/job-detail';
+import JobDetail from 'src/pages/dashboard/jobs/[jobTitle]/job-detail';
+import axios from 'axios';
+import { useRouter } from 'next/router';
 
 // ----------------------------------------------------------------------
-const statusess = ['Active', 'Inactive', 'Closed'];
+const statusess = ['Active', 'Inactive'];
 
 JobTableRow.propTypes = {
   row: PropTypes.object,
@@ -40,10 +44,12 @@ export default function JobTableRow({
   onEditRow,
   onSelectRow,
   onDeleteRow,
+  onDetails,
   id,
   initialStatuses,
 }) {
-  const { company, avatarUrl, name, phoneNumber, role, status } = row;
+  
+  const { jobTitle, salary, lang, createdAt, status } = row;
 
   const [openConfirm, setOpenConfirm] = useState(false);
 
@@ -65,11 +71,18 @@ export default function JobTableRow({
     setOpenPopover(null);
   };
 
-  const [statuses, setStatuses] = useState(initialStatuses);
+  const handleStatusesChange = (event, cellId) => {
+    const newStatus = event.target.value;
 
-  const handleStatusesChange = (event) => {
-    const newStatuses = event.target.value;
-    setStatuses(newStatuses);
+    // Make an HTTP POST request to the API endpoint
+    axios
+      .post('/api/v1/jobs', { cellId, newStatus })
+      .then((response) => {
+        console.log('Status updated successfully');
+      })
+      .catch((error) => {
+        console.error('Error updating status:', error);
+      });
   };
 
   return (
@@ -80,43 +93,38 @@ export default function JobTableRow({
         </TableCell>
 
         <TableCell>
-          
-            
+          <Stack direction="row" alignItems="center" spacing={2}>
+            {/* <Avatar alt={name} src={logoUrl} /> */}
 
-            <Link  href={PATH_DASHBOARD.jobs.jobDetail}>
-              <Typography sx={{ color: 'black', textDecoration: "none" }} variant="subtitle2" noWrap>
-                {company}
-              </Typography>
-            </Link>
-          
-        </TableCell>
-
-
-        <TableCell align="left">{name}</TableCell>
-        
-
-        <TableCell align="left" sx={{ textTransform: 'capitalize' }}>
-          {role}
+            <Typography
+              onClick={() => {
+                onDetails();
+              }}
+              sx={{ color: 'black', cursor: 'pointer' }}
+              variant="subtitle2"
+              noWrap
+            >
+              {jobTitle}
+            </Typography>
+          </Stack>
         </TableCell>
 
         <TableCell align="left" sx={{ textTransform: 'capitalize' }}>
-          {phoneNumber}
+          {salary}
         </TableCell>
 
-        <TableCell align="left">
-          {/* <CustomSmallSelect value={statuses} onChange={handleStatusesChange}>
-            {statusess.map((option) => {
-              return (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              );
-            })}
-          </CustomSmallSelect> */}
+        <TableCell align="left" sx={{ textTransform: 'capitalize' }}>
+          {lang}
+        </TableCell>
 
+        <TableCell align="left" sx={{ textTransform: 'capitalize' }}>
+          {createdAt}
+        </TableCell>
+
+        <TableCell align="center">
           <Label
             variant="soft"
-            color={status === 'banned' ? 'error' : status === 'closed' ? 'info' : 'success'}
+            color={(status === 'Inactive' && 'error') || 'success'}
             sx={{ textTransform: 'capitalize' }}
           >
             {status}

@@ -72,6 +72,15 @@ const navConfig = [
       subheader: 'app',
       items: [
         {
+          title: 'blog',
+          path: PATH_DASHBOARD.blog.root,
+          icon: ICONS.blog,
+          children: [
+            { title: 'posts', path: PATH_DASHBOARD.blog.posts },
+            { title: 'create', path: PATH_DASHBOARD.blog.new },
+          ],
+        },
+        {
           title: 'mail',
           path: PATH_DASHBOARD.mail.root,
           icon: ICONS.mail,
@@ -100,7 +109,7 @@ const navConfig = [
 //     subheader: 'Website',
 //   items: [
 
-//     candidate
+    
 //     {
 //       title: 'Website Backend',
 //       path: PATH_DASHBOARD.candidate.root,

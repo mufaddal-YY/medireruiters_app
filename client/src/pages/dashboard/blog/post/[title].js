@@ -30,7 +30,7 @@ BlogPostPage.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
 
 // ----------------------------------------------------------------------
 
-export default function BlogPostPage() {
+export default function BlogPostPage({params}) {
   const { themeStretch } = useSettingsContext();
 
   const {
@@ -47,10 +47,10 @@ export default function BlogPostPage() {
 
   const getPost = useCallback(async () => {
     try {
-      const response = await axios.get('/api/blog/post', {
-        params: { title },
+      const response = await axios.get(`http://localhost:8080/api/v1/blogs/${params._id}`, {
+        params: { _id: params._id },
       });
-
+  
       setPost(response.data.post);
       setLoadingPost(false);
     } catch (error) {
@@ -58,7 +58,8 @@ export default function BlogPostPage() {
       setLoadingPost(false);
       setErrorMsg(error.message);
     }
-  }, [title]);
+  }, [params, title]);
+  
 
   const getRecentPosts = useCallback(async () => {
     try {

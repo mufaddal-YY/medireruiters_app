@@ -1,10 +1,11 @@
-import { Schema, model, models } from "mongoose";
+import mongoose from "mongoose";
 
-const JobApplicationSchema = new Schema({
-  creator: { type: Schema.Types.ObjectId, ref: "User" },
-  job: { type: Schema.Types.ObjectId, ref: "Job" },
+const JobApplicationSchema = new mongoose.Schema({
+  creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  job: { type: mongoose.Schema.Types.ObjectId, ref: "Job" },
 });
 
-const JobApplication = models.JobApplication || model("JobApplication", JobApplicationSchema);
+const JobApplicationModel = mongoose.model("JobApplication", JobApplicationSchema);
+// const JobApplication = models.JobApplication || model("JobApplication", JobApplicationSchema);
 
-export default JobApplication;
+export default JobApplicationModel;

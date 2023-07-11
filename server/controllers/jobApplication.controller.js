@@ -1,4 +1,4 @@
-import JobApplication from "./../mongodb/models/jobApplication.js";
+import JobApplication from "../mongodb/models/jobApplication.js";
 
 const getAllJobApplication = async (req, res) => {
   try {

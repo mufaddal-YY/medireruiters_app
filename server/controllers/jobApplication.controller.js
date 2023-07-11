@@ -14,7 +14,7 @@ const createJobApplication = async (req, res) => {
     const { creator: userId, job: jobId } = req.body;
     const jobApplicationId = req.params.id;
 
-    const jobApplicationExists = await Job.findOne({ _id: jobApplicationId });
+    const jobApplicationExists = await JobApplication.findOne({ _id: jobApplicationId });
 
     if (jobApplicationExists) {
       return res.status(200).json(jobApplicationExists);

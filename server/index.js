@@ -6,6 +6,7 @@ import candidateRouter from './routes/candidate.routes.js';
 import databaseRouter from './routes/database.routes.js';
 import jobRouter from './routes/job.routes.js';
 import blogRouter from './routes/blog.routes.js';
+import jobApplicationRouter from './routes/jobApplication.routes.js';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.get("/", (req, res) => {
   res.send({ message: "Hello World!" });
 });
 
+app.use('/api/v1/jobApplications', jobApplicationRouter);
 app.use('/api/v1/databases', databaseRouter);
 app.use('/api/v1/candidates', candidateRouter);
 app.use('/api/v1/jobs', jobRouter);

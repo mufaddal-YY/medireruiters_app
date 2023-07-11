@@ -3,7 +3,6 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Container } from '@mui/material';
 import { PATH_DASHBOARD } from '../../../../routes/paths';
-import { _userList } from '../../../../_mock/arrays';
 import DashboardLayout from '../../../../layouts/dashboard';
 import { useSettingsContext } from '../../../../components/settings';
 import CustomBreadcrumbs from '../../../../components/custom-breadcrumbs';
@@ -26,22 +25,22 @@ export default function UserEditPage() {
     try {
       const response = await axios.get('https://medi-server.onrender.com/api/v1/candidates');
       console.log('API response:', response.data);
-      setUsers(response.data);
+      setCandidates(response.data);
     } catch (error) {
       console.error('API error:', error);
     }
   };
 
   useEffect(() => {
-    getUsers();
+    getCandidates();
   }, []);
 
   useEffect(() => {
-    if (candidate.length > 0) {
-      const foundCandidate = candidates.find((candidates) => paramCase(candidate.name) === name);
+    if (candidates.length > 0) {
+      const foundCandidate = candidates.find((candidate) => paramCase(candidate.name) === name);
       setCurrentCandidate(foundCandidate);
     }
-  }, [users, name]);
+  }, [candidates, name]);
 
   return (
     <>
@@ -61,11 +60,11 @@ export default function UserEditPage() {
               name: 'Candidate',
               href: PATH_DASHBOARD.general.database,
             },
-            { name: currentUser?.name },
+            { name: currentCandidate?.name },
           ]}
         />
 
-        <UserNewEditForm isEdit currentUser={currentUser} />
+        <UserNewEditForm isEdit currentCandidate={currentCandidate} />
       </Container>
     </>
   );

@@ -11,25 +11,23 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 JobEditPage.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
-const statusess = ['Active', 'Inactive'];
 
-export default function JobEditPage({ params }) {
+export default function JobEditPage() {
 
   const { themeStretch } = useSettingsContext();
  
-  const {
-    query: { jobTitle },
-  } = useRouter();
+  const router = useRouter();
+  const { jobTitle } = router.query;
 
   const [jobs, setJobs] = useState([]);
   const [currentJob, setCurrentJob] = useState(null);
-  const [selectedStatus, setSelectedStatus] = useState(''); // State for selected status
+  const [isLoading, setIsLoading] = useState(true);
 
   const getJobs = async () => {
     try {
-      const response = await axios.get(`https://medi-server.onrender.com/api/v1/jobs/${params._id}`);
-      console.log('API response:', response.data);
-      setJobs(response.data); // Assuming you have a state variable named "jobs" to store the response data
+      const response = await axios.get('https://medi-server.onrender.com/api/v1/jobs');
+      setJobs(response.data);
+      setIsLoading(false);
     } catch (error) {
       console.error('API error:', error);
     }
@@ -42,7 +40,7 @@ export default function JobEditPage({ params }) {
   useEffect(() => {
     if (jobs.length > 0) {
       const foundJob = jobs.find((job) => paramCase(job.jobTitle) === jobTitle);
-      setCurrentJob(foundJob); // Assuming you have a state variable named "currentJob" to store the found job
+      setCurrentJob(foundJob);
     }
   }, [jobs, jobTitle]);
 
@@ -66,7 +64,7 @@ export default function JobEditPage({ params }) {
                   name: 'Candidate',
                   href: PATH_DASHBOARD.general.jobs,
                 },
-                { jobTitle: currentJob?.jobTitle },
+                { name: currentJob?.jobTitle },
               ]}
             />
           </Stack>

@@ -13,7 +13,7 @@ import CustomBreadcrumbs from '../../../components/custom-breadcrumbs';
 import JobsNewEditForm from '../../../sections/@dashboard/jobs/JobNewEditForm';
 
 // ----------------------------------------------------------------------
-
+const statusess = ['Active', 'Inactive'];
 NewJob.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
 
 // ----------------------------------------------------------------------
@@ -42,7 +42,7 @@ export default function NewJob() {
             { name: 'New Job' },
           ]}
         />
-        <JobsNewEditForm />
+        <JobsNewEditForm initialStatuses={statusess} />
       </Container>
     </>
   );

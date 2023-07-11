@@ -30,7 +30,7 @@ JobNewEditForm.propTypes = {
   currentJob: PropTypes.object,
 };
 
-export default function JobNewEditForm({ isEdit = false, currentJob, initialStatuses }) {
+export default function JobNewEditForm({ isEdit = false, currentJob }) {
   const { push } = useRouter();
 
   const { enqueueSnackbar } = useSnackbar();

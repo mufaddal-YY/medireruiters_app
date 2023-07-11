@@ -105,53 +105,106 @@ export default function CandidateListPage() {
 
   const [tableData, setTableData] = useState([]);
 
+  // const router = useRouter();
+  // const { creator } = router.query;
+
+  // const [jobApplications, setJobApplications] = useState([]);
+  // const [candidates, setCandidates] = useState([]);
+  // const [currentCandidates, setCurrentCandidates] = useState(null);
+  // const [isLoading, setIsLoading] = useState(true);
+
+  // const getJobApplications = async () => {
+  //   try {
+  //     const response = await axios.get('https://medi-server.onrender.com/api/v1/jobApplications');
+  //     console.log('API response:', response.data);
+  //     setJobApplications(response.data); // Assuming you have a state variable named "jobs" to store the response data
+  //   } catch (error) {
+  //     console.error('API error:', error);
+  //   }
+  // };
+
+  // const getCandidates = async () => {
+  //   try {
+  //     const response = await axios.get('https://medi-server.onrender.com/api/v1/candidates');
+  //     console.log('API response:', response.data);
+  //     setCandidates(response.data); // Assuming you have a state variable named "jobs" to store the response data
+  //   } catch (error) {
+  //     console.error('API error:', error);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   getCandidates();
+  //   getJobApplications();
+  // }, []);
+
+  // useEffect(() => {
+  //   if (candidates.length > 0) {
+  //     const filteredCandidates = candidates.filter(candidate => {
+  //       const creatorFromJobApplication = jobApplications.find(
+  //         application => paramCase(application.creator) === paramCase(candidate.creator)
+  //       );
+  //       return creatorFromJobApplication !== undefined;
+  //     });
+  //     console.log(filteredCandidates);
+  //     setCurrentCandidates(filteredCandidates);
+  //   }
+  // }, [candidates, jobApplications]);
+
   const router = useRouter();
-  const { jobTitle } = router.query;
+  const { creator } = router.query;
 
   const [jobApplications, setJobApplications] = useState([]);
-  const [currentJob, setCurrentJob] = useState(null);
+  const [candidates, setCandidates] = useState([]);
+  const [currentCandidates, setCurrentCandidates] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const getJobApplications = async () => {
     try {
-      const response = await fetch('https://medi-server.onrender.com/api/v1/jobApplications');
-      if (!response.ok) {
-        throw new Error('Failed to fetch job applications');
-      }
-      const data = await response.json();
-      setJobApplications(data);
-      
-      setIsLoading(false);
+      const response = await axios.get('https://medi-server.onrender.com/api/v1/jobApplications');
+      console.log('API response:', response.data);
+      setJobApplications(response.data);
     } catch (error) {
       console.error('API error:', error);
     }
   };
-  
+
+  const getCandidates = async () => {
+    try {
+      const response = await axios.get('https://medi-server.onrender.com/api/v1/candidates');
+      console.log('API response:', response.data);
+      setCandidates(response.data);
+    } catch (error) {
+      console.error('API error:', error);
+    }
+  };
+
   useEffect(() => {
-    getJobApplications();
+    const fetchData = async () => {
+      try {
+        await Promise.all([getJobApplications(), getCandidates()]);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  // useEffect(() => {
-  //   if (jobs.length > 0) {
-  //     const foundJob = jobs.find((job) => paramCase(job.jobTitle) === jobTitle);
-  //     setCurrentJob(foundJob);
-  //   }
-  // }, [jobs, jobTitle]);
+  useEffect(() => {
+    if (candidates.length > 0) {
+      const filteredCandidates = candidates.filter(candidate => {
+        const creatorFromJobApplication = jobApplications.find(
+          application => paramCase(application.creator) === paramCase(candidate.creator)
+        );
+        return creatorFromJobApplication !== undefined;
+      });
+      console.log(filteredCandidates);
+      setCurrentCandidates(filteredCandidates);
+    }
+  }, [candidates, jobApplications]);
 
-  
-  // const getTableData = useCallback(async () => {
-  //   try {
-  //     const response = await axios.get('https://medi-server.onrender.com/api/v1/candidates');
-  //     console.log('API response:', response.data);
-  //     setTableData(response.data);
-  //   } catch (error) {
-  //     console.error('API error:', error);
-  //   }
-  // }, []);
-  
-  // useEffect(() => {
-  //   getTableData();
-  // }, []);
 
 
   const [openConfirm, setOpenConfirm] = useState(false);

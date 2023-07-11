@@ -9,4 +9,27 @@ const getAllJobApplication = async (req, res) => {
   }
 };
 
-export { getAllJobApplication };
+const createJobApplication = async (req, res) => {
+  try {
+    const { creator: userId, job: jobId } = req.body;
+    const jobApplicationId = req.params.id;
+
+    const jobApplicationExists = await Job.findOne({ _id: jobApplicationId });
+
+    if (jobApplicationExists) {
+      return res.status(200).json(jobApplicationExists);
+    }
+
+    const newJobApplication = await JobApplication.create({
+      creator: userId,
+      job: jobId,
+    });
+
+    res.status(200).json(newJobApplication);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error occurred" });
+  }
+};
+
+export { getAllJobApplication, createJobApplication };
